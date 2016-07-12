@@ -1,12 +1,12 @@
 package common
 
 import (
-	"errors"
 	"fmt"
 	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 
 	"github.com/hashicorp/packer/helper/multistep"
@@ -26,7 +26,22 @@ type Player5Driver struct {
 }
 
 func (d *Player5Driver) Clone(dst, src string) error {
-	return errors.New("Cloning is not supported with VMWare Player version 5. Please use VMWare Player version 6, or greater.")
+	ovftool := "ovftool"
+	if runtime.GOOS == "windows" {
+		ovftool = "ovftool.exe"
+	}
+
+	if _, err := exec.LookPath(ovftool); err != nil {
+		return fmt.Errorf("Error %s not found: %s", ovftool, err)
+	}
+
+	cmd := exec.Command(ovftool, src, dst)
+
+	if _, _, err := runAndLog(cmd); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (d *Player5Driver) CompactDisk(diskPath string) error {
